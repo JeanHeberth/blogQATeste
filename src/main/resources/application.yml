@@ -1,0 +1,17 @@
+spring:
+  application:
+    name: qa-blog
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017/qa_blog
+  jackson:
+    serialization:
+      fail-on-empty-beans: false
+
+server:
+  port: 8089
+
+logging:
+  level:
+    org.springframework.web: INFO
+    org.springframework.data: DEBUG
