@@ -25,6 +25,7 @@ bin/
 out/
 !**/src/main/**/out/
 !**/src/test/**/out/
+.git-config.json
 
 ### NetBeans ###
 /nbproject/private/

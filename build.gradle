@@ -1,7 +1,8 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.5.7'
+    id 'org.springframework.boot' version '3.4.1'
     id 'io.spring.dependency-management' version '1.1.7'
+    id 'jacoco'  // ✅ Plugin JaCoCo
 }
 
 group = 'br.com'
@@ -9,9 +10,8 @@ version = '0.0.1-SNAPSHOT'
 description = 'blogQATeste'
 
 java {
-    toolchain {
-        languageVersion = JavaLanguageVersion.of(17)
-    }
+    sourceCompatibility = '21'
+    targetCompatibility = '21'
 }
 
 configurations {
@@ -25,16 +25,220 @@ repositories {
 }
 
 dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-data-mongodb'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
-    implementation 'org.springframework.boot:spring-boot-starter-web'
-    compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
+
+    compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
+
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+    testImplementation platform('org.testcontainers:testcontainers-bom:1.20.4')
+    testImplementation 'org.testcontainers:testcontainers'
+    testImplementation 'org.testcontainers:mongodb'
+    testImplementation 'org.testcontainers:junit-jupiter'
 }
 
+// ========================================
+// CONFIGURAÇÃO DE TESTES
+// ========================================
 tasks.named('test') {
     useJUnitPlatform()
+
+    maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+
+    environment "TESTCONTAINERS_RYUK_DISABLED", "false"
+    environment "TESTCONTAINERS_CHECKS_DISABLE", "false"
+
+    systemProperty "junit.jupiter.execution.parallel.enabled", "false"
+
+    minHeapSize = "512m"
+    maxHeapSize = "2048m"
+
+    reports {
+        html.required = true
+        junitXml.required = true
+    }
+
+    testLogging {
+        events "passed", "skipped", "failed"
+        exceptionFormat "full"
+        showExceptions true
+        showCauses true
+        showStackTraces true
+        showStandardStreams = false
+
+        afterSuite { desc, result ->
+            if (!desc.parent) {
+                println ""
+                println "--------------------------------------------------"
+                println "Resultados dos Testes:"
+                println "--------------------------------------------------"
+                println "Testes executados: ${result.testCount}"
+                println "Sucessos: ${result.successfulTestCount}"
+                println "Falhas: ${result.failedTestCount}"
+                println "Ignorados: ${result.skippedTestCount}"
+                println "--------------------------------------------------"
+            }
+        }
+    }
+
+    // Gera relatório JaCoCo automaticamente após testes
+    finalizedBy jacocoTestReport
+}
+
+// ========================================
+// CONFIGURAÇÃO JACOCO
+// ========================================
+jacoco {
+    toolVersion = "0.8.11"
+}
+
+jacocoTestReport {
+    dependsOn test
+
+    reports {
+        xml {
+            required = true
+        }
+        html {
+            required = true
+        }
+        csv {
+            required = false
+        }
+    }
+
+    // Excluir classes que não precisam cobertura
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                    '**/QaBlogApplication.class',
+                    '**/config/**',
+                    '**/dto/**',
+                    '**/*Config.class',
+                    '**/*Exception.class',
+                    '**/domain/TipoQa.class',
+                    '**/*Builder.class',
+            ])
+        }))
+    }
+
+    doLast {
+        println ""
+        println "=" * 70
+        println "📊 RELATÓRIO JACOCO GERADO"
+        println "=" * 70
+        println "🌐 HTML: ${buildDir}/reports/jacoco/test/html/index.html"
+        println "📄 XML:  ${buildDir}/reports/jacoco/test/jacocoTestReport.xml"
+        println "=" * 70
+        println ""
+    }
+}
+
+// Verificação de cobertura mínima
+jacocoTestCoverageVerification {
+    dependsOn jacocoTestReport
+
+    violationRules {
+        // Regra geral do projeto
+        rule {
+            enabled = true
+            element = 'BUNDLE'
+
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.80
+            }
+
+            limit {
+                counter = 'BRANCH'
+                value = 'COVEREDRATIO'
+                minimum = 0.70
+            }
+        }
+
+        // Regra para services (mais rigorosa)
+        rule {
+            enabled = true
+            element = 'CLASS'
+            includes = ['br.com.qablog.service.*']
+
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.90
+            }
+        }
+
+        // Regra para domínio
+        rule {
+            enabled = true
+            element = 'CLASS'
+            includes = ['br.com.qablog.domain.*']
+            excludes = ['br.com.qablog.domain.TipoQa']
+
+            limit {
+                counter = 'LINE'
+                value = 'COVEREDRATIO'
+                minimum = 0.85
+            }
+        }
+    }
+}
+
+// Integrar verificação com gradle check
+check.dependsOn jacocoTestCoverageVerification
+
+// Task customizada para gerar relatório e abrir no navegador
+tasks.register('jacocoReport') {
+    group = 'verification'
+    description = 'Gera relatório JaCoCo e tenta abrir no navegador'
+
+    dependsOn test, jacocoTestReport
+
+    doLast {
+        def reportPath = file("${buildDir}/reports/jacoco/test/html/index.html")
+
+        if (reportPath.exists()) {
+            println ""
+            println "=" * 80
+            println "📊 RELATÓRIO JACOCO DISPONÍVEL"
+            println "=" * 80
+            println "📂 Arquivo: ${reportPath.absolutePath}"
+            println ""
+
+            // Tentar abrir no navegador
+            def os = System.getProperty('os.name').toLowerCase()
+            try {
+                if (os.contains('windows')) {
+                    exec {
+                        commandLine 'cmd', '/c', "start ${reportPath.absolutePath}"
+                        ignoreExitValue true
+                    }
+                } else if (os.contains('mac')) {
+                    exec {
+                        commandLine 'open', reportPath.absolutePath
+                        ignoreExitValue true
+                    }
+                } else {
+                    exec {
+                        commandLine 'xdg-open', reportPath.absolutePath
+                        ignoreExitValue true
+                    }
+                }
+                println "✅ Abrindo relatório no navegador..."
+            } catch (Exception e) {
+                println "ℹ️  Abra manualmente o arquivo acima"
+            }
+            println "=" * 80
+            println ""
+        } else {
+            println "⚠️  Relatório não encontrado. Execute primeiro: ./gradlew test"
+        }
+    }
 }
