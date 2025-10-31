@@ -18,12 +18,6 @@ jobs:
       - name: Run tests with coverage
         run: ./gradlew test jacocoTestReport
 
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
-        with:
-          file: ./build/reports/jacoco/test/jacocoTestReport.xml
-          fail_ci_if_error: true
-
       - name: Publish test report
         uses: mikepenz/action-junit-report@v4
         if: always()
