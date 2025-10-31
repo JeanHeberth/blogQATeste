@@ -89,10 +89,11 @@ pipeline {
         // =========================================================
         stage('Upload Coverage to Codecov') {
             steps {
-                echo "Enviando relatório para Codecov..."
-                sh '''
-                    bash <(curl -s https://codecov.io/bash) -t ${CODECOV_TOKEN}
-                '''
+                echo 'Enviando relatório para Codecov...'
+                    sh '''
+                        curl -s https://codecov.io/bash | bash -s -- -t ${CODECOV_TOKEN}
+                    '''
+
             }
         }
 
