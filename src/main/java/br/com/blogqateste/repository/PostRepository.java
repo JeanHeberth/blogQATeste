@@ -8,6 +8,5 @@ import java.util.List;
 
 public interface PostRepository extends MongoRepository<Post, String> {
     List<Post> findByTipoQa(TipoQa tipoQa);
-
     List<Post> findByPublicadoTrue();
 }
