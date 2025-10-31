@@ -90,11 +90,10 @@ pipeline {
         stage('Upload Coverage to Codecov') {
             steps {
                 echo 'Enviando relatório para Codecov...'
-                sh '''
-                    curl -Os https://uploader.codecov.io/latest/macos/codecov
-                    chmod +x codecov
-                    ./codecov -t $CODECOV_TOKEN -f build/reports/jacoco/test/jacocoTestReport.xml || true
-                '''
+                    sh '''
+                        curl -s https://codecov.io/bash | bash -s -- -t ${CODECOV_TOKEN}
+                    '''
+
             }
         }
 
