@@ -46,6 +46,11 @@ public class PostService {
         return PostResponseDTO.fromEntity(repository.findById(id).orElseThrow());
     }
 
+    @Transactional(readOnly = true)
+    public void deletar(String id) {
+        repository.deleteById(id);
+    }
+
 
     private static void aplicarCriacao(PostRequestDTO dto, Post post) {
         post.setTitulo(dto.titulo());
