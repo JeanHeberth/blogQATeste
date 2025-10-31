@@ -16,7 +16,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataMongoTest
-@Import(AbstractIntegrationTest.class) // Adicionar essa linha
+@Import(AbstractIntegrationTest.class)
 class PostRepositoryTest extends AbstractIntegrationTest {
 
     @Autowired
