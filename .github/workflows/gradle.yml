@@ -184,15 +184,6 @@ jobs:
           name: jacoco-html-report
           path: build/reports/jacoco/test/html
 
-      # --------------------------------------------------------
-      # 6️⃣  Upload HTML coverage report como artefato
-      # --------------------------------------------------------
-      - name: Upload HTML coverage report
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: jacoco-html-report
-          path: build/reports/jacoco/test/html
 
       # --------------------------------------------------------
       # 7️⃣  Deploy automático no GitHub Pages (branch gh-pages)
