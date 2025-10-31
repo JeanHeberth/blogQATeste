@@ -1,6 +1,7 @@
 package br.com.blogqateste.service;
 
 import br.com.blogqateste.dto.PostRequestDTO;
+import br.com.blogqateste.dto.PostResponseDTO;
 import br.com.blogqateste.entity.Post;
 import br.com.blogqateste.enums.TipoQa;
 import br.com.blogqateste.exception.PostNotFoundException;
@@ -50,13 +51,13 @@ class PostServiceTest {
         ArgumentCaptor<Post> captor = ArgumentCaptor.forClass(Post.class);
         when(repository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
-        Post salvo = service.criar(dto);
+        PostResponseDTO salvo = service.criar(dto);
 
         verify(repository).save(captor.capture());
         Post enviado = captor.getValue();
 
         assertThat(enviado.getTitulo()).isEqualTo("Conteúdo com mais de vinte caracteres");
-        assertThat(salvo.isPublicado()).isTrue();
+        assertThat(salvo.publicado()).isTrue();
     }
 
     @Test
@@ -80,10 +81,10 @@ class PostServiceTest {
                 true
         );
 
-        Post atualizado = service.atualizar(id, dto);
+        PostResponseDTO atualizado = service.atualizar(id, dto);
 
-        assertThat(atualizado.getTitulo()).isEqualTo("Conteúdo com mais de vinte caracteres 2");
-        assertThat(atualizado.getDataAtualizacao()).isNotNull();
+        assertThat(atualizado.titulo()).isEqualTo("Conteúdo com mais de vinte caracteres 2");
+        assertThat(atualizado.dataAtualizacao()).isNotNull();
     }
 
     @Test
@@ -109,7 +110,7 @@ class PostServiceTest {
     void buscarTodos() {
         PageRequest pr = PageRequest.of(0, 10);
         when(repository.findAll(pr)).thenReturn(new PageImpl<>(List.of()));
-        Page<Post> pagina = service.buscarTodos(pr);
+        Page<PostResponseDTO> pagina = service.buscarTodos(pr);
         assertThat(pagina.getContent()).isEmpty();
     }
 }
