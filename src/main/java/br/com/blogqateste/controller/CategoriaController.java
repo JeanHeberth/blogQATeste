@@ -2,6 +2,7 @@ package br.com.blogqateste.controller;
 
 
 import br.com.blogqateste.entity.Categoria;
+import br.com.blogqateste.repository.CategoriaRepository;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
