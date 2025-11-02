@@ -1,7 +1,7 @@
 package br.com.blogqateste.controller;
 
-import br.com.blogqateste.dto.PostRequestDTO;
-import br.com.blogqateste.dto.PostResponseDTO;
+import br.com.blogqateste.dto.post.PostRequestDTO;
+import br.com.blogqateste.dto.post.PostResponseDTO;
 import br.com.blogqateste.service.PostService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
