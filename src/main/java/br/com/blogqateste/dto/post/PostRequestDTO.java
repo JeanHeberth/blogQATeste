@@ -1,4 +1,4 @@
-package br.com.blogqateste.dto;
+package br.com.blogqateste.dto.post;
 
 import br.com.blogqateste.entity.Post;
 import br.com.blogqateste.enums.TipoQa;

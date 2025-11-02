@@ -1,10 +1,9 @@
 package br.com.blogqateste.service;
 
-import br.com.blogqateste.dto.PostRequestDTO;
-import br.com.blogqateste.dto.PostResponseDTO;
+import br.com.blogqateste.dto.post.PostRequestDTO;
+import br.com.blogqateste.dto.post.PostResponseDTO;
 import br.com.blogqateste.entity.Post;
 import br.com.blogqateste.enums.TipoQa;
-import br.com.blogqateste.exception.PostNotFoundException;
 import br.com.blogqateste.repository.PostRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
