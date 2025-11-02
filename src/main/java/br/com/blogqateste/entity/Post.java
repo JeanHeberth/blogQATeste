@@ -13,6 +13,7 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Document(collection = "posts")
 @Data
@@ -37,6 +38,10 @@ public class Post {
 
     @NotBlank(message = "O autor deve ser informado")
     private String autor;
+
+    private Categoria categoria;
+
+    private List<Tag> tags;
 
     private LocalDateTime dataCriacao;
 
