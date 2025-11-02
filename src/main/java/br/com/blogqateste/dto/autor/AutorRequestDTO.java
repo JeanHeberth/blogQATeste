@@ -9,12 +9,12 @@ public record AutorRequestDTO(
         String bio,
         String fotoUrl
 ) {
-    public static AutorRequestDTO fromEntity(Autor autor) {
-        return new AutorRequestDTO(
-                autor.getId(),
-                autor.getNome(),
-                autor.getEmail(),
-                autor.getBio(),
-                autor.getFotoUrl());
+    public static Autor toEntity(AutorRequestDTO autor) {
+        return new Autor(
+                autor.id(),
+                autor.nome(),
+                autor.email(),
+                autor.bio(),
+                autor.fotoUrl());
     }
 }

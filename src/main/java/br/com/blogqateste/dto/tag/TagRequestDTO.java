@@ -5,10 +5,11 @@ import br.com.blogqateste.entity.Tag;
 public record TagRequestDTO(
         String id,
         String nome
-){
-    public static TagRequestDTO fromEntity(Tag tag) {
-        return new TagRequestDTO(
-                tag.getId(),
-                tag.getNome());
+) {
+    public static Tag toEntity(TagRequestDTO tag) {
+        return new Tag(
+                tag.id(),
+                tag.nome()
+        );
     }
 }
