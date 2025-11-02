@@ -24,6 +24,7 @@ public class Autor {
     private String email;
 
     private String bio;
+
     private String fotoUrl;
 }
 
