@@ -7,10 +7,11 @@ public record CategoriaRequestDTO(
         String nome,
         String descricao
 ) {
-    public static CategoriaRequestDTO fromEntity(Categoria categoria) {
-        return new CategoriaRequestDTO(
-                categoria.getId(),
-                categoria.getNome(),
-                categoria.getDescricao());
+    public static Categoria toEntity(CategoriaRequestDTO categoria) {
+        return new Categoria(
+                categoria.id(),
+                categoria.nome(),
+                categoria.descricao()
+        );
     }
 }
