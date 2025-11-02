@@ -1,8 +1,8 @@
 package br.com.blogqateste.integration;
 
 import br.com.blogqateste.config.AbstractIntegrationTest;
-import br.com.blogqateste.dto.PostRequestDTO;
-import br.com.blogqateste.dto.PostResponseDTO;
+import br.com.blogqateste.dto.post.PostRequestDTO;
+import br.com.blogqateste.dto.post.PostResponseDTO;
 import br.com.blogqateste.enums.TipoQa;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
