@@ -59,7 +59,7 @@ class PostServiceTest {
                 "Post sobre Testes Automatizados",
                 "Conteúdo detalhado sobre automação de testes com Spring Boot",
                 TipoQa.AUTOMATIZADO,
-                "Jean Heberth",
+                "Jean Heberth testes",
                 categoria,
                 LocalDateTime.now(),
                 LocalDateTime.now(),
