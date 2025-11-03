@@ -116,7 +116,7 @@ pipeline {
         }
 
         // =========================================================
-        // 6️⃣ UPLOAD TO CODECOV
+        // 6️⃣ UPLOAD TO CODECOV (Windows-safe)
         // =========================================================
         stage('Upload Coverage to Codecov') {
             steps {
@@ -125,11 +125,17 @@ pipeline {
                     if (isUnix()) {
                         sh 'curl -s https://codecov.io/bash | bash -s -- -t ${CODECOV_TOKEN}'
                     } else {
-                        bat 'curl -s https://codecov.io/bash | bash -s -- -t %CODECOV_TOKEN%'
+                        bat '''
+                            echo 🔄 Baixando uploader oficial Codecov para Windows...
+                            powershell -Command "Invoke-WebRequest -Uri https://uploader.codecov.io/latest/windows/codecov.exe -OutFile codecov.exe"
+                            echo 🚀 Enviando cobertura para Codecov...
+                            codecov.exe -t %CODECOV_TOKEN%
+                        '''
                     }
                 }
             }
         }
+
 
         // =========================================================
         // 7️⃣ DEPLOY TO GITHUB PAGES
