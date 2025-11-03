@@ -119,7 +119,13 @@ pipeline {
                     if (isUnix()) {
                         sh 'curl -s https://codecov.io/bash | bash -s -- -t ${CODECOV_TOKEN}'
                     } else {
-                        bat 'curl -s https://codecov.io/bash | bash -s -- -t %CODECOV_TOKEN%'
+                        // Caminho local para o executável do Codecov (ajuste se necessário)
+                        bat '''
+                            echo Baixando Codecov para Windows...
+                            curl -L -o codecov.exe https://uploader.codecov.io/latest/windows/codecov.exe
+                            echo Enviando relatório de cobertura...
+                            codecov.exe -t %CODECOV_TOKEN% -f build\\reports\\jacoco\\test\\jacocoTestReport.xml
+                        '''
                     }
                 }
             }
