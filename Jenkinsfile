@@ -2,17 +2,17 @@ pipeline {
     agent any
 
     tools {
-            jdk 'JDK21'
-        }
+        jdk 'JDK21'
+    }
 
-        environment {
-            JAVA_HOME = "C:\\Users\\maq_mac\\.jdks\\corretto-21.0.8"
-            PATH = "${env.JAVA_HOME}\\bin;${env.PATH}"
-            CODECOV_TOKEN = credentials('CODECOV')
-            GITHUB_TOKEN = credentials('GITHUB_TOKEN')
-            // Força Gradle a usar o mesmo Java que o Jenkins
-            ORG_GRADLE_JAVA_HOME = "${env.JAVA_HOME}"
-        }
+    environment {
+        JAVA_HOME = "C:\\Users\\maq_mac\\.jdks\\corretto-21.0.8"
+        PATH = "${env.JAVA_HOME}\\bin;${env.PATH}"
+        CODECOV_TOKEN = credentials('CODECOV')
+        GITHUB_TOKEN = credentials('GITHUB_TOKEN')
+        // Força Gradle a usar o mesmo Java que o Jenkins
+        ORG_GRADLE_JAVA_HOME = "${env.JAVA_HOME}"
+    }
 
     stages {
         // =========================================================
@@ -119,7 +119,6 @@ pipeline {
                     if (isUnix()) {
                         sh 'curl -s https://codecov.io/bash | bash -s -- -t ${CODECOV_TOKEN}'
                     } else {
-                        // Caminho local para o executável do Codecov (ajuste se necessário)
                         bat '''
                             echo Baixando Codecov para Windows...
                             curl -L -o codecov.exe https://uploader.codecov.io/latest/windows/codecov.exe
@@ -158,8 +157,11 @@ pipeline {
                 }
             }
         }
-    }
-        stage('Deploy to Tomcat') {
+
+        // =========================================================
+        // 8️⃣ DEPLOY TO TOMCAT (Script-based)
+        // =========================================================
+        stage('Deploy to Tomcat via Script') {
             when {
                 branch 'main'
             }
@@ -175,6 +177,7 @@ pipeline {
                 }
             }
         }
+    }
 
     // =========================================================
     // 🔄 POST ACTIONS
