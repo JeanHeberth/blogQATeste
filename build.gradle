@@ -1,5 +1,6 @@
 plugins {
     id 'java'
+    id 'war'
     id 'org.springframework.boot' version '3.4.1'
     id 'io.spring.dependency-management' version '1.1.7'
     id 'jacoco'  // ✅ Plugin JaCoCo
@@ -93,9 +94,13 @@ tasks.named('test') {
         }
     }
 
+
+
     // Gera relatório JaCoCo automaticamente após testes
     finalizedBy jacocoTestReport
 }
+
+
 
 // ========================================
 // CONFIGURAÇÃO JACOCO
@@ -248,4 +253,13 @@ tasks.register('jacocoReport') {
             println "⚠️  Relatório não encontrado. Execute primeiro: ./gradlew test"
         }
     }
+}
+
+
+
+war {
+    enabled = true // ✅ ativa a geração do WAR
+    archiveBaseName.set('blogqateste') // nome do arquivo final .war
+    archiveVersion.set("")                 // ✅ remove versão do nome
+    archiveClassifier.set("")              // ✅ remove "-plain" ou qualquer sufixo
 }
