@@ -159,6 +159,23 @@ pipeline {
             }
         }
     }
+        stage('Deploy to Tomcat') {
+            when {
+                branch 'main'
+            }
+            steps {
+                script {
+                    echo "🚀 Iniciando deploy automático no Tomcat 11..."
+                    if (isUnix()) {
+                        sh './scripts/deploy_tomcat.sh'
+                    } else {
+                        bat 'powershell -ExecutionPolicy Bypass -File deploy_tomcat.ps1'
+                    }
+                    echo "✅ Deploy finalizado com sucesso! WAR atualizado no Tomcat 🎯"
+                }
+            }
+        }
+    }
 
     // =========================================================
     // 🔄 POST ACTIONS
