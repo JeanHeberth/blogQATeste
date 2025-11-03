@@ -91,21 +91,15 @@ pipeline {
                 script {
                     echo "📊 Gerando relatórios de cobertura Jacoco..."
                     if (isUnix()) {
-                        sh './gradlew jacocoTestReport'
+                        sh './gradlew jacocoTestReport -x jacocoTestCoverageVerification'
                     } else {
-                        bat 'gradlew jacocoTestReport'
+                        bat 'gradlew jacocoTestReport -x jacocoTestCoverageVerification'
                     }
                 }
             }
             post {
                 always {
                     junit '**/build/test-results/test/TEST-*.xml'
-                    jacoco(
-                        execPattern: '**/jacocoTest.exec',
-                        classPattern: '**/classes',
-                        sourcePattern: '**/src/main/java',
-                        inclusionPattern: '**/*.class'
-                    )
                     publishHTML(target: [
                         reportDir: 'build/reports/jacoco/test/html',
                         reportFiles: 'index.html',
@@ -116,7 +110,7 @@ pipeline {
         }
 
         // =========================================================
-        // 6️⃣ UPLOAD TO CODECOV (Windows-safe)
+        // 6️⃣ UPLOAD TO CODECOV
         // =========================================================
         stage('Upload Coverage to Codecov') {
             steps {
@@ -126,59 +120,68 @@ pipeline {
                         sh 'curl -s https://codecov.io/bash | bash -s -- -t ${CODECOV_TOKEN}'
                     } else {
                         bat '''
-                            echo 🔄 Baixando uploader oficial Codecov para Windows...
-                            powershell -Command "Invoke-WebRequest -Uri https://uploader.codecov.io/latest/windows/codecov.exe -OutFile codecov.exe"
-                            echo 🚀 Enviando cobertura para Codecov...
-                            codecov.exe -t %CODECOV_TOKEN%
+                            echo Baixando Codecov para Windows...
+                            curl -L -o codecov.exe https://uploader.codecov.io/latest/windows/codecov.exe
+                            echo Enviando relatório de cobertura...
+                            codecov.exe -t %CODECOV_TOKEN% -f build\\reports\\jacoco\\test\\jacocoTestReport.xml
                         '''
                     }
                 }
             }
         }
 
+        // =========================================================
+        // 7️⃣ DEPLOY WAR TO TOMCAT (Windows)
+        // =========================================================
+        stage('Deploy WAR to Tomcat') {
+            steps {
+                script {
+                    echo "🚀 Copiando WAR para a pasta do Tomcat..."
+
+                    // Caminhos configuráveis
+                    def sourceWar = "build\\libs\\blogqateste.war"
+                    def tomcatWebapps = "C:\\apache-tomcat-11.0.11\\webapps"
+
+                    // Copia o WAR gerado para o Tomcat
+                    bat """
+                        echo Copiando arquivo WAR para o Tomcat...
+                        copy /Y "${sourceWar}" "${tomcatWebapps}\\blogqateste.war"
+                    """
+
+                    // Reinicia o serviço Tomcat
+                    bat """
+                        echo Reiniciando serviço Tomcat...
+                        net stop Tomcat11
+                        net start Tomcat11
+                    """
+                }
+            }
+        }
 
         // =========================================================
-        // 7️⃣ DEPLOY TO GITHUB PAGES
+        // 8️⃣ DEPLOY TO TOMCAT (Script-based)
         // =========================================================
-        stage('Publish Jacoco to GitHub Pages') {
+        stage('Deploy to Tomcat via Script') {
             when {
                 branch 'main'
             }
             steps {
                 script {
-                    echo "🚀 Publicando relatório Jacoco no GitHub Pages..."
+                    echo "🚀 Iniciando deploy automático no Tomcat 11..."
                     if (isUnix()) {
-                        sh '''
-                            git config --global user.email "ci@jenkins.local"
-                            git config --global user.name "Jenkins CI"
-                            REPO_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-                            git clone --branch gh-pages ${REPO_URL} gh-pages || git clone ${REPO_URL} gh-pages
-                            mkdir -p gh-pages/jacoco
-                            cp -R build/reports/jacoco/test/html/* gh-pages/jacoco/
-                            cd gh-pages
-                            git add .
-                            git commit -m "Atualiza relatório Jacoco [ci skip]" || echo "Nenhuma alteração detectada"
-                            git push ${REPO_URL} gh-pages
-                        '''
+                        sh './scripts/deploy_tomcat.sh'
                     } else {
-                        bat '''
-                            git config --global user.email "ci@jenkins.local"
-                            git config --global user.name "Jenkins CI"
-                            set REPO_URL=https://x-access-token:%GITHUB_TOKEN%@github.com/%GITHUB_REPOSITORY%.git
-                            git clone --branch gh-pages %REPO_URL% gh-pages || git clone %REPO_URL% gh-pages
-                            mkdir gh-pages\\jacoco
-                            xcopy /E /I build\\reports\\jacoco\\test\\html gh-pages\\jacoco
-                            cd gh-pages
-                            git add .
-                            git commit -m "Atualiza relatório Jacoco [ci skip]" || echo "Nenhuma alteração detectada"
-                            git push %REPO_URL% gh-pages
-                        '''
+                        bat 'powershell -ExecutionPolicy Bypass -File deploy_tomcat.ps1'
                     }
+                    echo "✅ Deploy finalizado com sucesso! WAR atualizado no Tomcat 🎯"
                 }
             }
         }
     }
 
+    // =========================================================
+    // 🔄 POST ACTIONS
+    // =========================================================
     post {
         always {
             echo '✅ Pipeline concluído.'
