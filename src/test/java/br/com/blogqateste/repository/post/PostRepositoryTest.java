@@ -1,8 +1,8 @@
-package br.com.blogqateste.integration;
+package br.com.blogqateste.repository.post;
 
-import br.com.blogqateste.config.AbstractIntegrationTest;
 import br.com.blogqateste.entity.Post;
 import br.com.blogqateste.enums.TipoQa;
+import br.com.blogqateste.integration.config.AbstractIntegrationTest;
 import br.com.blogqateste.repository.PostRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

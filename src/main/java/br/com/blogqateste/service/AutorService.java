@@ -3,13 +3,13 @@ package br.com.blogqateste.service;
 import br.com.blogqateste.dto.autor.AutorRequestDTO;
 import br.com.blogqateste.dto.autor.AutorResponseDTO;
 import br.com.blogqateste.entity.Autor;
-import br.com.blogqateste.exception.ResourceNotFoundException;
 import br.com.blogqateste.repository.AutorRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
@@ -27,7 +27,7 @@ public class AutorService {
     @Transactional
     public AutorResponseDTO atualizar(String id, AutorRequestDTO dto) {
         Autor existente = repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Autor não encontrado: " + id));
+                .orElseThrow(() -> new NoSuchElementException("Autor não encontrado: " + id));
 
         existente.setNome(dto.nome());
         existente.setEmail(dto.email());
@@ -49,14 +49,14 @@ public class AutorService {
     @Transactional(readOnly = true)
     public AutorResponseDTO buscarPorId(String id) {
         Autor autor = repository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Autor não encontrado: " + id));
+                .orElseThrow(() -> new NoSuchElementException("Autor não encontrado: " + id));
         return AutorResponseDTO.fromEntity(autor);
     }
 
     @Transactional
     public void deletar(String id) {
         if (!repository.existsById(id)) {
-            throw new ResourceNotFoundException("Autor não encontrado: " + id);
+            throw new NoSuchElementException("Autor não encontrado: " + id);
         }
         repository.deleteById(id);
     }

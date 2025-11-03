@@ -1,7 +1,7 @@
-package br.com.blogqateste.integration;
+package br.com.blogqateste.repository.tag;
 
-import br.com.blogqateste.config.AbstractIntegrationTest;
 import br.com.blogqateste.entity.Tag;
+import br.com.blogqateste.integration.config.AbstractIntegrationTest;
 import br.com.blogqateste.repository.TagRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

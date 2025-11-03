@@ -3,13 +3,13 @@ package br.com.blogqateste.service;
 import br.com.blogqateste.dto.tag.TagRequestDTO;
 import br.com.blogqateste.dto.tag.TagResponseDTO;
 import br.com.blogqateste.entity.Tag;
-import br.com.blogqateste.exception.ResourceNotFoundException;
 import br.com.blogqateste.repository.TagRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +28,7 @@ public class TagService {
     @Transactional
     public TagResponseDTO atualizar(String id, TagRequestDTO dto){
         Tag tag = tagRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Tag não encontrada: " + id));
+                .orElseThrow(() -> new NoSuchElementException("Tag não encontrada: " + id));
         tag.setNome(dto.nome());
         Tag salvo = tagRepository.save(tag);
         return TagResponseDTO.fromEntity(salvo);
@@ -37,7 +37,7 @@ public class TagService {
     @Transactional(readOnly = true)
     public TagResponseDTO buscarPorId(String id){
         Tag tag = tagRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Tag não encontrada: " + id));
+                .orElseThrow(() -> new NoSuchElementException("Tag não encontrada: " + id));
         return TagResponseDTO.fromEntity(tag);
     }
 

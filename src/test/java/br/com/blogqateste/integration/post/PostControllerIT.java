@@ -1,12 +1,12 @@
-package br.com.blogqateste.integration;
+package br.com.blogqateste.integration.post;
 
-import br.com.blogqateste.config.AbstractIntegrationTest;
 import br.com.blogqateste.controller.PostController;
 import br.com.blogqateste.dto.post.PostRequestDTO;
 import br.com.blogqateste.dto.post.PostResponseDTO;
 import br.com.blogqateste.entity.Categoria;
 import br.com.blogqateste.entity.Tag;
 import br.com.blogqateste.enums.TipoQa;
+import br.com.blogqateste.integration.config.AbstractIntegrationTest;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
