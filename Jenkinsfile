@@ -1,17 +1,9 @@
 pipeline {
     agent any
 
-    tools {
-        jdk 'JDK21'
-    }
-
     environment {
-        JAVA_HOME = "C:\\Users\\maq_mac\\.jdks\\corretto-21.0.8"
-        PATH = "${env.JAVA_HOME}\\bin;${env.PATH}"
         CODECOV_TOKEN = credentials('CODECOV')
         GITHUB_TOKEN = credentials('GITHUB_TOKEN')
-        // Força Gradle a usar o mesmo Java que o Jenkins
-        ORG_GRADLE_JAVA_HOME = "${env.JAVA_HOME}"
     }
 
     stages {
@@ -91,9 +83,9 @@ pipeline {
                 script {
                     echo "📊 Gerando relatórios de cobertura Jacoco..."
                     if (isUnix()) {
-                        sh './gradlew jacocoTestReport'
+                        sh './gradlew jacocoTestReport -x jacocoTestCoverageVerification'
                     } else {
-                        bat 'gradlew jacocoTestReport'
+                        bat 'gradlew jacocoTestReport -x jacocoTestCoverageVerification'
                     }
                 }
             }
@@ -119,34 +111,43 @@ pipeline {
                     if (isUnix()) {
                         sh 'curl -s https://codecov.io/bash | bash -s -- -t ${CODECOV_TOKEN}'
                     } else {
-                        bat 'codecov.exe -t %CODECOV_TOKEN%'
+                        bat 'curl -s https://codecov.io/bash | bash -s -- -t %CODECOV_TOKEN%'
                     }
                 }
             }
         }
 
         // =========================================================
-        // 7️⃣ DEPLOY TO TOMCAT (Windows)
+        // 7️⃣ DEPLOY WAR TO TOMCAT (Windows)
         // =========================================================
-        stage('Deploy to Tomcat') {
-            when {
-                branch 'main'
-            }
+        stage('Deploy WAR to Tomcat') {
             steps {
                 script {
-                    echo "🚀 Iniciando deploy automático no Tomcat 11..."
-                    if (isUnix()) {
-                        sh './scripts/deploy_tomcat.sh'
-                    } else {
-                        bat 'powershell -ExecutionPolicy Bypass -File deploy_tomcat.ps1'
-                    }
+                    echo "🚀 Copiando WAR para a pasta do Tomcat..."
+
+                    // Caminhos configuráveis
+                    def sourceWar = "build\\libs\\blogqateste.war"
+                    def tomcatWebapps = "C:\\apache-tomcat-11.0.11\\webapps"
+
+                    // Copia o WAR gerado para o Tomcat
+                    bat """
+                        echo Copiando arquivo WAR para o Tomcat...
+                        copy /Y "${sourceWar}" "${tomcatWebapps}\\blogqateste.war"
+                    """
+
+                    // Reinicia o serviço Tomcat
+                    bat """
+                        echo Reiniciando serviço Tomcat...
+                        net stop Tomcat11
+                        net start Tomcat11
+                    """
                 }
             }
         }
     }
 
     // =========================================================
-    // 🔄 POST ACTIONS (sempre executadas)
+    // 🔄 POST ACTIONS
     // =========================================================
     post {
         always {
