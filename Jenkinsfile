@@ -1,13 +1,20 @@
 pipeline {
     agent any
 
+    tools {
+        jdk 'JDK21'
+    }
+
     environment {
+        JAVA_HOME = "C:\\Users\\maq_mac\\.jdks\\corretto-21.0.8"
+        PATH = "${env.JAVA_HOME}\\bin;${env.PATH}"
         CODECOV_TOKEN = credentials('CODECOV')
         GITHUB_TOKEN = credentials('GITHUB_TOKEN')
+        // Força Gradle a usar o mesmo Java que o Jenkins
+        ORG_GRADLE_JAVA_HOME = "${env.JAVA_HOME}"
     }
 
     stages {
-
         // =========================================================
         // 1️⃣ CHECKOUT
         // =========================================================
@@ -93,6 +100,12 @@ pipeline {
             post {
                 always {
                     junit '**/build/test-results/test/TEST-*.xml'
+                    jacoco(
+                        execPattern: '**/jacocoTest.exec',
+                        classPattern: '**/classes',
+                        sourcePattern: '**/src/main/java',
+                        inclusionPattern: '**/*.class'
+                    )
                     publishHTML(target: [
                         reportDir: 'build/reports/jacoco/test/html',
                         reportFiles: 'index.html',
@@ -103,7 +116,7 @@ pipeline {
         }
 
         // =========================================================
-        // 6️⃣ UPLOAD TO CODECOV
+        // 6️⃣ UPLOAD TO CODECOV (Windows-safe)
         // =========================================================
         stage('Upload Coverage to Codecov') {
             steps {
@@ -112,35 +125,60 @@ pipeline {
                     if (isUnix()) {
                         sh 'curl -s https://codecov.io/bash | bash -s -- -t ${CODECOV_TOKEN}'
                     } else {
-                        bat 'codecov.exe -t %CODECOV_TOKEN%'
+                        bat '''
+                            echo 🔄 Baixando uploader oficial Codecov para Windows...
+                            powershell -Command "Invoke-WebRequest -Uri https://uploader.codecov.io/latest/windows/codecov.exe -OutFile codecov.exe"
+                            echo 🚀 Enviando cobertura para Codecov...
+                            codecov.exe -t %CODECOV_TOKEN%
+                        '''
                     }
                 }
             }
         }
 
+
         // =========================================================
-        // 7️⃣ DEPLOY TO TOMCAT (Windows)
+        // 7️⃣ DEPLOY TO GITHUB PAGES
         // =========================================================
-        stage('Deploy to Tomcat') {
+        stage('Publish Jacoco to GitHub Pages') {
             when {
                 branch 'main'
             }
             steps {
                 script {
-                    echo "🚀 Iniciando deploy automático no Tomcat 11..."
+                    echo "🚀 Publicando relatório Jacoco no GitHub Pages..."
                     if (isUnix()) {
-                        sh './scripts/deploy_tomcat.sh'
+                        sh '''
+                            git config --global user.email "ci@jenkins.local"
+                            git config --global user.name "Jenkins CI"
+                            REPO_URL="https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+                            git clone --branch gh-pages ${REPO_URL} gh-pages || git clone ${REPO_URL} gh-pages
+                            mkdir -p gh-pages/jacoco
+                            cp -R build/reports/jacoco/test/html/* gh-pages/jacoco/
+                            cd gh-pages
+                            git add .
+                            git commit -m "Atualiza relatório Jacoco [ci skip]" || echo "Nenhuma alteração detectada"
+                            git push ${REPO_URL} gh-pages
+                        '''
                     } else {
-                        bat 'powershell -ExecutionPolicy Bypass -File deploy_tomcat.ps1'
+                        bat '''
+                            git config --global user.email "ci@jenkins.local"
+                            git config --global user.name "Jenkins CI"
+                            set REPO_URL=https://x-access-token:%GITHUB_TOKEN%@github.com/%GITHUB_REPOSITORY%.git
+                            git clone --branch gh-pages %REPO_URL% gh-pages || git clone %REPO_URL% gh-pages
+                            mkdir gh-pages\\jacoco
+                            xcopy /E /I build\\reports\\jacoco\\test\\html gh-pages\\jacoco
+                            cd gh-pages
+                            git add .
+                            git commit -m "Atualiza relatório Jacoco [ci skip]" || echo "Nenhuma alteração detectada"
+                            git push %REPO_URL% gh-pages
+                        '''
                     }
                 }
             }
         }
     }
 
-    // =========================================================
-    // 🔄 POST ACTIONS (sempre executadas)
-    // =========================================================
     post {
         always {
             echo '✅ Pipeline concluído.'
@@ -148,7 +186,6 @@ pipeline {
         success {
             echo '🎉 Todos os stages executados com sucesso!'
         }
-
         failure {
             echo '❌ Falha detectada no pipeline. Verifique os logs.'
         }
