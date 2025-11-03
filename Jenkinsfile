@@ -179,15 +179,39 @@ pipeline {
         }
     }
 
-    post {
-        always {
-            echo '✅ Pipeline concluído.'
+    // =========================================================
+            // 7️⃣ DEPLOY TO TOMCAT (Windows)
+            // =========================================================
+            stage('Deploy to Tomcat') {
+                when {
+                    branch 'main'
+                }
+                steps {
+                    script {
+                        echo "🚀 Iniciando deploy automático no Tomcat 11..."
+                        if (isUnix()) {
+                            sh './scripts/deploy_tomcat.sh'
+                        } else {
+                            bat 'powershell -ExecutionPolicy Bypass -File deploy_tomcat.ps1'
+                        }
+                    }
+                }
+            }
         }
-        success {
-            echo '🎉 Todos os stages executados com sucesso!'
-        }
-        failure {
-            echo '❌ Falha detectada no pipeline. Verifique os logs.'
-        }
+
+        // =========================================================
+        // 🔄 POST ACTIONS (sempre executadas)
+        // =========================================================
+            post {
+                always {
+                    echo '✅ Pipeline concluído.'
+                }
+                success {
+                    echo '🎉 Todos os stages executados com sucesso!'
+                }
+
+                failure {
+                    echo '❌ Falha detectada no pipeline. Verifique os logs.'
+                }
+            }
     }
-}
