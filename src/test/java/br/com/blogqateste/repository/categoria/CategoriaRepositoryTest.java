@@ -1,7 +1,7 @@
-package br.com.blogqateste.integration;
+package br.com.blogqateste.repository.categoria;
 
-import br.com.blogqateste.config.AbstractIntegrationTest;
 import br.com.blogqateste.entity.Categoria;
+import br.com.blogqateste.integration.config.AbstractIntegrationTest;
 import br.com.blogqateste.repository.CategoriaRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

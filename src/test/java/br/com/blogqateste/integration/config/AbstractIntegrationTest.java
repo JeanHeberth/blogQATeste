@@ -1,4 +1,4 @@
-package br.com.blogqateste.config;
+package br.com.blogqateste.integration.config;
 
 
 import org.springframework.boot.test.context.TestConfiguration;

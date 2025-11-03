@@ -15,3 +15,7 @@ logging:
   level:
     org.springframework.web: INFO
     org.springframework.data: DEBUG
+
+jwt:
+  secret: minha-chave-super-secreta-e-segura-minha-chave-super-secreta-e-segura
+  expiration: 86400000
