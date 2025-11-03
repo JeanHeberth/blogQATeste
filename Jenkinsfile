@@ -1,13 +1,20 @@
 pipeline {
     agent any
 
+    tools {
+        jdk 'JDK21'
+    }
+
     environment {
+        JAVA_HOME = "C:\\Users\\maq_mac\\.jdks\\corretto-21.0.8"
+        PATH = "${env.JAVA_HOME}\\bin;${env.PATH}"
         CODECOV_TOKEN = credentials('CODECOV')
         GITHUB_TOKEN = credentials('GITHUB_TOKEN')
+        // Força Gradle a usar o mesmo Java que o Jenkins
+        ORG_GRADLE_JAVA_HOME = "${env.JAVA_HOME}"
     }
 
     stages {
-
         // =========================================================
         // 1️⃣ CHECKOUT
         // =========================================================
@@ -125,7 +132,7 @@ pipeline {
         }
 
         // =========================================================
-        // 7️⃣ DEPLOY TO GITHUB PAGES (somente na main)
+        // 7️⃣ DEPLOY TO GITHUB PAGES
         // =========================================================
         stage('Publish Jacoco to GitHub Pages') {
             when {
@@ -166,9 +173,6 @@ pipeline {
         }
     }
 
-    // =========================================================
-    // 🔄 POST ACTIONS (sempre executadas)
-    // =========================================================
     post {
         always {
             echo '✅ Pipeline concluído.'
@@ -176,7 +180,6 @@ pipeline {
         success {
             echo '🎉 Todos os stages executados com sucesso!'
         }
-
         failure {
             echo '❌ Falha detectada no pipeline. Verifique os logs.'
         }
