@@ -129,25 +129,6 @@ pipeline {
             // =========================================================
             // 7️⃣ DEPLOY TO TOMCAT (Windows)
             // =========================================================
-            stage('Deploy to Tomcat') {
-                when {
-                    branch 'main'
-                }
-                steps {
-                    script {
-                        echo "🚀 Iniciando deploy automático no Tomcat 11..."
-                        if (isUnix()) {
-                            sh './scripts/deploy_tomcat.sh'
-                        } else {
-                            bat 'powershell -ExecutionPolicy Bypass -File deploy_tomcat.ps1'
-                        }
-                    }
-                }
-            }
-        }
-            // =========================================================
-            // 8️⃣ DEPLOY TO TOMCAT SERVER (Windows)
-            // =========================================================
             stage('Deploy WAR to Tomcat') {
                 steps {
                     script {
