@@ -92,9 +92,9 @@ pipeline {
                     script {
                         echo "📊 Gerando relatórios de cobertura Jacoco..."
                         if (isUnix()) {
-                            sh './gradlew jacocoTestReport -x jacocoTestCoverageVerification'
+                            sh './gradlew jacocoTestReport'
                         } else {
-                            bat 'gradlew jacocoTestReport -x jacocoTestCoverageVerification'
+                            bat 'gradlew jacocoTestReport'
                         }
                     }
                 }
@@ -120,43 +120,34 @@ pipeline {
                         if (isUnix()) {
                             sh 'curl -s https://codecov.io/bash | bash -s -- -t ${CODECOV_TOKEN}'
                         } else {
-                            bat 'curl -s https://codecov.io/bash | bash -s -- -t %CODECOV_TOKEN%'
+                            bat 'codecov.exe -t %CODECOV_TOKEN%'
                         }
                     }
                 }
             }
 
             // =========================================================
-            // 7️⃣ DEPLOY WAR TO TOMCAT (Windows)
+            // 7️⃣ DEPLOY TO TOMCAT (Windows)
             // =========================================================
-            stage('Deploy WAR to Tomcat') {
+            stage('Deploy to Tomcat') {
+                when {
+                    branch 'main'
+                }
                 steps {
                     script {
-                        echo "🚀 Copiando WAR para a pasta do Tomcat..."
-
-                        // Caminhos configuráveis
-                        def sourceWar = "build\\libs\\blogqateste.war"
-                        def tomcatWebapps = "C:\\apache-tomcat-11.0.11\\webapps"
-
-                        // Copia o WAR gerado para o Tomcat
-                        bat """
-                            echo Copiando arquivo WAR para o Tomcat...
-                            copy /Y "${sourceWar}" "${tomcatWebapps}\\blogqateste.war"
-                        """
-
-                        // Reinicia o serviço Tomcat
-                        bat """
-                            echo Reiniciando serviço Tomcat...
-                            net stop Tomcat11
-                            net start Tomcat11
-                        """
+                        echo "🚀 Iniciando deploy automático no Tomcat 11..."
+                        if (isUnix()) {
+                            sh './scripts/deploy_tomcat.sh'
+                        } else {
+                            bat 'powershell -ExecutionPolicy Bypass -File deploy_tomcat.ps1'
+                        }
                     }
                 }
             }
-        }
+
 
         // =========================================================
-        // 🔄 POST ACTIONS
+        // 🔄 POST ACTIONS (sempre executadas)
         // =========================================================
         post {
             always {
@@ -165,9 +156,9 @@ pipeline {
             success {
                 echo '🎉 Todos os stages executados com sucesso!'
             }
+
             failure {
                 echo '❌ Falha detectada no pipeline. Verifique os logs.'
             }
         }
     }
-}
