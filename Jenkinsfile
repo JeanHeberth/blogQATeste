@@ -14,11 +14,6 @@ pipeline {
             ORG_GRADLE_JAVA_HOME = "${env.JAVA_HOME}"
         }
 
-    environment {
-        CODECOV_TOKEN = credentials('CODECOV')
-        GITHUB_TOKEN = credentials('GITHUB_TOKEN')
-    }
-
     stages {
         // =========================================================
         // 1️⃣ CHECKOUT
