@@ -3,13 +3,13 @@ package br.com.blogqateste.service;
 import br.com.blogqateste.dto.categoria.CategoriaRequestDTO;
 import br.com.blogqateste.dto.categoria.CategoriaResponseDTO;
 import br.com.blogqateste.entity.Categoria;
-import br.com.blogqateste.exception.ResourceNotFoundException;
 import br.com.blogqateste.repository.CategoriaRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +28,7 @@ public class CategoriaService {
     @Transactional
     public CategoriaResponseDTO atualizar(String id, CategoriaRequestDTO dto){
         Categoria categoria = categoriaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada: " + id));
+                .orElseThrow(() -> new NoSuchElementException("Categoria não encontrada: " + id));
         categoria.setNome(dto.nome());
         categoria.setDescricao(dto.descricao());
         Categoria salvo = categoriaRepository.save(categoria);
@@ -38,7 +38,7 @@ public class CategoriaService {
     @Transactional(readOnly = true)
     public CategoriaResponseDTO buscarPorId(String id){
         Categoria categoria = categoriaRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Categoria não encontrada: " + id));
+                .orElseThrow(() -> new NoSuchElementException("Categoria não encontrada: " + id));
         return CategoriaResponseDTO.fromEntity(categoria);
     }
 

@@ -1,14 +1,12 @@
-package br.com.blogqateste.integration;
+package br.com.blogqateste.repository.autor;
 
-import br.com.blogqateste.config.AbstractIntegrationTest;
 import br.com.blogqateste.entity.Autor;
+import br.com.blogqateste.integration.config.AbstractIntegrationTest;
 import br.com.blogqateste.repository.AutorRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.data.mongo.DataMongoTest;
 import org.springframework.context.annotation.Import;
-
-import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
