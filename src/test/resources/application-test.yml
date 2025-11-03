@@ -1,0 +1,9 @@
+#spring:
+#  data:
+#    mongodb:
+#      uri: ${MONGODB_URI:mongodb://localhost:27017/qa_blog_test}
+#
+#logging:
+#  level:
+#    org.springframework.data: DEBUG
+#    org.testcontainers: INFO
