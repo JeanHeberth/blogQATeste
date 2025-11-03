@@ -27,8 +27,8 @@ import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
 /**
- * Testes unitários para PostService.
- * Usa mocks de PostRepository e verifica comportamento do serviço.
+ * Testes unitários para PostService — refatorado.
+ * Testa os fluxos de criação, atualização, busca e falha.
  */
 class PostServiceTest {
 
@@ -41,11 +41,14 @@ class PostServiceTest {
     void setup() {
         repository = Mockito.mock(PostRepository.class);
         service = new PostService(repository);
-        log.info("🧩 Configuração concluída — mock do PostRepository criado e injetado no PostService.");
+        log.info("🧩 Mock do PostRepository criado e injetado no PostService.");
     }
 
+    // =========================================================
+    // ✅ Criar Post
+    // =========================================================
     @Test
-    @DisplayName("✅ Deve criar um post com sucesso e persistir corretamente")
+    @DisplayName("✅ Deve criar um Post com sucesso e aplicar dados corretamente")
     void deveCriarPostComSucesso() {
         // Arrange
         Categoria categoria = new Categoria("1", "Categoria QA", "Categoria de Testes");
@@ -54,7 +57,7 @@ class PostServiceTest {
         PostRequestDTO dto = new PostRequestDTO(
                 null,
                 "Post sobre Testes Automatizados",
-                "Conteúdo detalhado sobre automação de testes com Spring Boot e boas práticas",
+                "Conteúdo detalhado sobre automação de testes com Spring Boot",
                 TipoQa.AUTOMATIZADO,
                 "Jean Heberth",
                 categoria,
@@ -64,54 +67,54 @@ class PostServiceTest {
                 true
         );
 
-        // Mocka o comportamento do save
+        // Mock save behavior
         when(repository.save(any(Post.class))).thenAnswer(invocation -> {
             Post p = invocation.getArgument(0);
             p.setId("mocked-id");
-            log.info("💾 Salvando post mockado: {}", p.getTitulo());
+            log.info("💾 Mock save: {}", p.getTitulo());
             return p;
         });
-
-        ArgumentCaptor<Post> captor = ArgumentCaptor.forClass(Post.class);
 
         // Act
         PostResponseDTO salvo = service.criar(dto);
 
         // Assert
-        verify(repository, times(1)).save(captor.capture());
-        Post postSalvo = captor.getValue();
-
-        log.info("🧠 Post capturado: título='{}', publicado={}", postSalvo.getTitulo(), postSalvo.isPublicado());
-
-        assertThat(postSalvo.getTitulo()).isEqualTo(dto.titulo());
-        assertThat(salvo.publicado()).isTrue();
+        assertThat(salvo).isNotNull();
         assertThat(salvo.titulo()).isEqualTo(dto.titulo());
-        assertThat(salvo.tipoQa()).isEqualTo(TipoQa.AUTOMATIZADO);
+        assertThat(salvo.autor()).isEqualTo(dto.autor());
+        assertThat(salvo.publicado()).isTrue();
+        verify(repository, times(1)).save(any(Post.class));
     }
 
+    // =========================================================
+    // ✅ Atualizar Post
+    // =========================================================
     @Test
-    @DisplayName("🔄 Deve atualizar apenas campos presentes no DTO")
-    void deveAtualizarCamposPresentes() {
+    @DisplayName("🔄 Deve atualizar um Post existente corretamente")
+    void deveAtualizarPostComSucesso() {
         // Arrange
         String id = "123";
-        Categoria categoria = new Categoria("1", "Categoria QA Atualizado", "Categoria de Testes");
-        Tag tag = new Tag("1", "Automação");
+        Categoria categoriaAntiga = new Categoria("1", "Antiga", "Categoria antiga");
+        Categoria categoriaNova = new Categoria("2", "Nova", "Categoria atualizada");
 
         Post existente = new Post();
         existente.setId(id);
-        existente.setTitulo("Título Antigo");
+        existente.setTitulo("Antigo");
         existente.setAutor("Autor Antigo");
+        existente.setCategoria(categoriaAntiga);
 
         when(repository.findById(id)).thenReturn(Optional.of(existente));
         when(repository.save(any(Post.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
+        Tag tag = new Tag("1", "Automação");
+
         PostRequestDTO dto = new PostRequestDTO(
                 id,
-                "Novo Título Atualizado",
+                "Novo título atualizado",
                 "Novo conteúdo detalhado de automação",
-                TipoQa.AMBOS,
+                TipoQa.AUTOMATIZADO,
                 "Jean Heberth",
-                categoria,
+                categoriaNova,
                 LocalDateTime.now(),
                 LocalDateTime.now(),
                 List.of(tag),
@@ -122,25 +125,32 @@ class PostServiceTest {
         PostResponseDTO atualizado = service.atualizar(id, dto);
 
         // Assert
-        log.info("🧩 Post atualizado: título='{}', autor='{}'", atualizado.titulo(), atualizado.autor());
+        assertThat(atualizado).isNotNull();
         assertThat(atualizado.titulo()).isEqualTo(dto.titulo());
+        assertThat(atualizado.autor()).isEqualTo(dto.autor());
+        assertThat(atualizado.categoria().nome()).isEqualTo("Nova");
         assertThat(atualizado.dataAtualizacao()).isNotNull();
         verify(repository, times(1)).save(any(Post.class));
+
+        log.info("🧠 Post atualizado com sucesso: {}", atualizado.titulo());
     }
 
+    // =========================================================
+    // ❌ Atualizar Post inexistente
+    // =========================================================
     @Test
-    @DisplayName("❌ Deve lançar exceção ao tentar atualizar post inexistente")
+    @DisplayName("❌ Deve lançar exceção ao tentar atualizar um Post inexistente")
     void deveLancarExcecaoQuandoPostNaoExistir() {
         // Arrange
-        String id = "No value present";
+        String id = "999";
         when(repository.findById(id)).thenReturn(Optional.empty());
 
         PostRequestDTO dto = new PostRequestDTO(
-                null,
-                "Título Inexistente",
-                "Conteúdo",
+                id,
+                "Título inexistente",
+                "Conteúdo inexistente",
                 TipoQa.MANUAL,
-                "Autor",
+                "Jean",
                 null,
                 null,
                 null,
@@ -148,17 +158,19 @@ class PostServiceTest {
                 false
         );
 
-        // Act & Assert
-        log.info("⚠️ Testando exceção para atualização de post inexistente ID={}", id);
+        // Act + Assert
         assertThatThrownBy(() -> service.atualizar(id, dto))
                 .isInstanceOf(NoSuchElementException.class)
-                .hasMessageContaining(id);
+                .hasMessageContaining("Post não encontrado");
         verify(repository, never()).save(any());
     }
 
+    // =========================================================
+    // 📄 Buscar todos
+    // =========================================================
     @Test
     @DisplayName("📄 Deve buscar todos os posts sem loops explícitos")
-    void deveBuscarTodosSemLoopExplicito() {
+    void deveBuscarTodosOsPostsSemLoopExplicito() {
         // Arrange
         PageRequest pageable = PageRequest.of(0, 10);
         when(repository.findAll(pageable)).thenReturn(new PageImpl<>(List.of()));
@@ -167,8 +179,42 @@ class PostServiceTest {
         Page<PostResponseDTO> pagina = service.buscarTodos(pageable);
 
         // Assert
-        log.info("📚 Total de posts retornados: {}", pagina.getContent().size());
+        assertThat(pagina).isNotNull();
         assertThat(pagina.getContent()).isEmpty();
         verify(repository, times(1)).findAll(pageable);
+
+        log.info("📚 Busca retornou {} posts.", pagina.getContent().size());
+    }
+
+    // =========================================================
+    // 🗑️ Deletar Post
+    // =========================================================
+    @Test
+    @DisplayName("🗑️ Deve deletar um Post existente com sucesso")
+    void deveDeletarPostComSucesso() {
+        // Arrange
+        String id = "456";
+        when(repository.existsById(id)).thenReturn(true);
+
+        // Act
+        service.deletar(id);
+
+        // Assert
+        verify(repository, times(1)).deleteById(id);
+        log.info("🗑️ Post ID={} deletado com sucesso.", id);
+    }
+
+    @Test
+    @DisplayName("🚫 Deve lançar exceção ao tentar deletar Post inexistente")
+    void deveLancarExcecaoAoDeletarPostInexistente() {
+        // Arrange
+        String id = "777";
+        when(repository.existsById(id)).thenReturn(false);
+
+        // Act + Assert
+        assertThatThrownBy(() -> service.deletar(id))
+                .isInstanceOf(NoSuchElementException.class)
+                .hasMessageContaining("Post não encontrado");
+        verify(repository, never()).deleteById(any());
     }
 }
