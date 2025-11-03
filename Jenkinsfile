@@ -176,6 +176,7 @@ pipeline {
         success {
             echo '🎉 Todos os stages executados com sucesso!'
         }
+
         failure {
             echo '❌ Falha detectada no pipeline. Verifique os logs.'
         }
