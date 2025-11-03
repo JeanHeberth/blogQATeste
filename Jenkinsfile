@@ -145,6 +145,33 @@ pipeline {
                 }
             }
         }
+            // =========================================================
+            // 8️⃣ DEPLOY TO TOMCAT SERVER (Windows)
+            // =========================================================
+            stage('Deploy WAR to Tomcat') {
+                steps {
+                    script {
+                        echo "🚀 Copiando WAR para a pasta do Tomcat..."
+
+                        // Caminho de origem e destino
+                        def sourceWar = "build\\libs\\blogqateste.war"
+                        def tomcatWebapps = "C:\\apache-tomcat-11.0.11\\webapps"
+
+                        // Copia o WAR para o Tomcat
+                        bat """
+                            echo Copiando arquivo WAR...
+                            copy /Y "${sourceWar}" "${tomcatWebapps}\\blogqateste.war"
+                        """
+
+                        // Reinicia o Tomcat
+                        bat """
+                            echo Reiniciando Tomcat...
+                            net stop Tomcat11
+                            net start Tomcat11
+                        """
+                    }
+                }
+            }
 
         // =========================================================
         // 🔄 POST ACTIONS (sempre executadas)
