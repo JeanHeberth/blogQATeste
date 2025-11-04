@@ -18,6 +18,10 @@ public class AbstractIntegrationTest {
                 .withReuse(true); // Reutiliza container entre testes
         mongoDBContainer.start();
     }
+
+
+
+    
     @DynamicPropertySource
     static void setProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.data.mongodb.uri", mongoDBContainer::getReplicaSetUrl);
