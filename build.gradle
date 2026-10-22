@@ -258,8 +258,6 @@ tasks.register('jacocoReport') {
 
 
 war {
-    enabled = true // ✅ ativa a geração do WAR
-    archiveBaseName.set('blogqateste') // nome do arquivo final .war
-    archiveVersion.set("")                 // ✅ remove versão do nome
-    archiveClassifier.set("")              // ✅ remove "-plain" ou qualquer sufixo
+    enabled = true
+    archiveFileName = "${project.name}.war"
 }
