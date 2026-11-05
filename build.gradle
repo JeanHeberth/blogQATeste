@@ -61,7 +61,9 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 
-    maxParallelForks = Runtime.runtime.availableProcessors().intdiv(2) ?: 1
+    // Um único fork: cada fork sobe seu próprio container Mongo (Testcontainers) e,
+    // em paralelo, a detecção do Docker falhava de forma intermitente no Jenkins
+    maxParallelForks = 1
 
     environment "TESTCONTAINERS_RYUK_DISABLED", "false"
     environment "TESTCONTAINERS_CHECKS_DISABLE", "false"
