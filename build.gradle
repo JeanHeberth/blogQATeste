@@ -1,9 +1,9 @@
 plugins {
     id 'java'
     id 'war'
-    id 'org.springframework.boot' version '3.4.1'
-    id 'io.spring.dependency-management' version '1.1.7'
     id 'jacoco'  // ✅ Plugin JaCoCo
+    id 'org.springframework.boot' version '4.1.1'
+    id 'io.spring.dependency-management' version '1.1.7'
 }
 
 group = 'br.com'
@@ -11,8 +11,9 @@ version = '0.0.1-SNAPSHOT'
 description = 'blogQATeste'
 
 java {
-    sourceCompatibility = '21'
-    targetCompatibility = '21'
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(27)
+    }
 }
 
 configurations {
@@ -33,16 +34,20 @@ dependencies {
 
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
 
-    compileOnly 'org.projectlombok:lombok'
-    annotationProcessor 'org.projectlombok:lombok'
+    compileOnly 'org.projectlombok:lombok:1.18.48'
+
+    annotationProcessor 'org.projectlombok:lombok:1.18.48'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.boot:spring-boot-starter-data-mongodb-test'
+    testImplementation 'org.springframework.boot:spring-boot-resttestclient'
+    testImplementation 'org.springframework.boot:spring-boot-restclient'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 
-    testImplementation platform('org.testcontainers:testcontainers-bom:1.20.4')
+    testImplementation platform('org.testcontainers:testcontainers-bom:2.0.4')
     testImplementation 'org.testcontainers:testcontainers'
-    testImplementation 'org.testcontainers:mongodb'
-    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:testcontainers-mongodb'
+    testImplementation 'org.testcontainers:testcontainers-junit-jupiter'
 
     // JWT
     implementation 'io.jsonwebtoken:jjwt-api:0.11.5'
@@ -106,7 +111,7 @@ tasks.named('test') {
 // CONFIGURAÇÃO JACOCO
 // ========================================
 jacoco {
-    toolVersion = "0.8.11"
+    toolVersion = "0.8.16"
 }
 
 jacocoTestReport {
