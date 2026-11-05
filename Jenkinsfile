@@ -1,13 +1,16 @@
 pipeline {
   agent any
+
   options {
     timestamps()
     timeout(time: 45, unit: 'MINUTES')
   }
+
   environment {
     TOMCAT_WEBAPPS_WINDOWS = 'C:\\apache-tomcat-11.0.11\\webapps'
     TOMCAT_WEBAPPS_UNIX    = '/opt/homebrew/opt/tomcat/libexec/webapps'
   }
+
   stages {
     stage('Checkout') {
       steps {
@@ -41,37 +44,27 @@ pipeline {
         script {
           if (isUnix()) {
             sh '''
-              export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+              echo "Java do agente Jenkins:"
+              java -version
 
-              echo "Procurando WAR..."
-              WAR_FILE=$(find build/libs -name "*.war" | head -n 1)
+              echo "Versao do Gradle:"
+              ./gradlew --version
 
-              if [ -z "$WAR_FILE" ]; then
-                echo "ERRO: Nenhum WAR encontrado."
-                exit 1
-              fi
-
-              WAR_NAME=$(basename "$WAR_FILE")
-              echo "WAR encontrado: $WAR_NAME"
-
-              mkdir -p "$TOMCAT_WEBAPPS_UNIX"
-              cp -f "$WAR_FILE" "$TOMCAT_WEBAPPS_UNIX/$WAR_NAME"
-
-              echo "Deploy realizado com sucesso."
+              echo "JDKs reconhecidos pelo Gradle:"
+              ./gradlew -q javaToolchains
             '''
           } else {
             bat '''
-              echo Procurando arquivo WAR...
+              @echo off
 
-              for %%F in ("%WORKSPACE%\\build\\libs\\*.war") do (
-                echo WAR encontrado: %%~nxF
-                copy /Y "%%~fF" "%TOMCAT_WEBAPPS_WINDOWS%\\%%~nxF"
-                echo Deploy concluido.
-                exit /b 0
-              )
+              echo Java do agente Jenkins:
+              java -version
 
-              echo ERRO: Nenhum WAR encontrado.
-              exit /b 1
+              echo Versao do Gradle:
+              call gradlew.bat --version
+
+              echo JDKs reconhecidos pelo Gradle:
+              call gradlew.bat -q javaToolchains
             '''
           }
         }
