@@ -4,6 +4,7 @@ pipeline {
     environment {
         TOMCAT_WEBAPPS_WINDOWS = 'C:\\apache-tomcat-11.0.11\\webapps'
         TOMCAT_WEBAPPS_UNIX    = '/opt/homebrew/opt/tomcat/libexec/webapps'
+        WAR_NAME               = 'blogQATeste.war'
     }
 
     stages {
@@ -36,9 +37,10 @@ pipeline {
         stage('Deploy WAR to Tomcat') {
             when {
                 expression {
-                    def gitBranch = (env.GIT_BRANCH ?: '').toLowerCase()
-                    return gitBranch == 'origin/main' ||
-                           gitBranch == 'origin/master'
+                    // GIT_BRANCH vem como 'origin/main' em job comum e BRANCH_NAME como 'main' em multibranch
+                    def branch = (env.BRANCH_NAME ?: env.GIT_BRANCH ?: '').toLowerCase().replaceFirst('^origin/', '')
+                    echo "Branch atual: ${branch}"
+                    return branch in ['main', 'master']
                 }
             }
 
@@ -48,18 +50,13 @@ pipeline {
                         sh '''
                             export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 
-                            echo "Procurando WAR..."
+                            WAR_FILE="build/libs/$WAR_NAME"
 
-                            WAR_FILE=$(find build/libs -name "*.war" | head -n 1)
-
-                            if [ -z "$WAR_FILE" ]; then
-                                echo "ERRO: Nenhum WAR encontrado."
+                            if [ ! -f "$WAR_FILE" ]; then
+                                echo "ERRO: $WAR_FILE não encontrado. Conteúdo de build/libs:"
+                                ls -la build/libs
                                 exit 1
                             fi
-
-                            WAR_NAME=$(basename "$WAR_FILE")
-
-                            echo "WAR encontrado: $WAR_NAME"
 
                             mkdir -p "$TOMCAT_WEBAPPS_UNIX"
                             cp -f "$WAR_FILE" "$TOMCAT_WEBAPPS_UNIX/$WAR_NAME"
@@ -68,17 +65,13 @@ pipeline {
                         '''
                     } else {
                         bat '''
-                            echo Procurando arquivo WAR...
-
-                            for %%F in ("%WORKSPACE%\\build\\libs\\*.war") do (
-                                echo WAR encontrado: %%~nxF
-                                copy /Y "%%~fF" "%TOMCAT_WEBAPPS_WINDOWS%\\%%~nxF"
-                                echo Deploy concluido.
-                                exit /b 0
+                            if not exist "%WORKSPACE%\\build\\libs\\%WAR_NAME%" (
+                                echo ERRO: %WAR_NAME% nao encontrado.
+                                exit /b 1
                             )
 
-                            echo ERRO: Nenhum WAR encontrado.
-                            exit /b 1
+                            copy /Y "%WORKSPACE%\\build\\libs\\%WAR_NAME%" "%TOMCAT_WEBAPPS_WINDOWS%\\%WAR_NAME%"
+                            echo Deploy concluido.
                         '''
                     }
                 }
