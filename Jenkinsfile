@@ -1,85 +1,95 @@
 pipeline {
-  agent any
+    agent any
 
-  options {
-    timestamps()
-    timeout(time: 45, unit: 'MINUTES')
-  }
-
-  environment {
-    TOMCAT_WEBAPPS_WINDOWS = 'C:\\apache-tomcat-11.0.11\\webapps'
-    TOMCAT_WEBAPPS_UNIX    = '/opt/homebrew/opt/tomcat/libexec/webapps'
-  }
-
-  stages {
-    stage('Checkout') {
-      steps {
-        echo "Checkout SCM"
-        checkout scm
-      }
+    environment {
+        TOMCAT_WEBAPPS_WINDOWS = 'C:\\apache-tomcat-11.0.11\\webapps'
+        TOMCAT_WEBAPPS_UNIX    = '/opt/homebrew/opt/tomcat/libexec/webapps'
+        WAR_NAME               = 'blogQATeste.war'
     }
 
-    stage('Build') {
-      steps {
-        script {
-          if (isUnix()) {
-            echo "Executando ./gradlew --no-daemon clean build"
-            sh 'chmod +x ./gradlew && ./gradlew --no-daemon clean build'
-          } else {
-            echo "Executando gradlew.bat --no-daemon clean build"
-            bat 'gradlew.bat --no-daemon clean build'
-          }
+    stages {
+
+        stage('Checkout') {
+            steps {
+                echo 'Clonando repositório...'
+                checkout scm
+            }
         }
-      }
-    }
 
-    stage('Deploy WAR to Tomcat') {
-      when {
-        expression {
-          def gitBranch = (env.GIT_BRANCH ?: '').toLowerCase()
-          return gitBranch == 'origin/main' || gitBranch == 'origin/master'
+        stage('Build') {
+            steps {
+                script {
+                    if (isUnix()) {
+                        sh '''
+                            export JAVA_HOME=$(/usr/libexec/java_home -v 21)
+                            export PATH="$JAVA_HOME/bin:/opt/homebrew/bin:/usr/local/bin:$PATH"
+
+                            chmod +x gradlew
+                            ./gradlew clean build -x test
+                        '''
+                    } else {
+                        bat 'gradlew clean build -x test'
+                    }
+                }
+            }
         }
-      }
-      steps {
-        script {
-          if (isUnix()) {
-            sh '''
-              echo "Java do agente Jenkins:"
-              java -version
 
-              echo "Versao do Gradle:"
-              ./gradlew --version
+        stage('Deploy WAR to Tomcat') {
+            when {
+                expression {
+                    // GIT_BRANCH vem como 'origin/main' em job comum e BRANCH_NAME como 'main' em multibranch
+                    def branch = (env.BRANCH_NAME ?: env.GIT_BRANCH ?: '').toLowerCase().replaceFirst('^origin/', '')
+                    echo "Branch atual: ${branch}"
+                    return branch in ['main', 'master']
+                }
+            }
 
-              echo "JDKs reconhecidos pelo Gradle:"
-              ./gradlew -q javaToolchains
-            '''
-          } else {
-            bat '''
-              @echo off
+            steps {
+                script {
+                    if (isUnix()) {
+                        sh '''
+                            export PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 
-              echo Java do agente Jenkins:
-              java -version
+                            WAR_FILE="build/libs/$WAR_NAME"
 
-              echo Versao do Gradle:
-              call gradlew.bat --version
+                            if [ ! -f "$WAR_FILE" ]; then
+                                echo "ERRO: $WAR_FILE não encontrado. Conteúdo de build/libs:"
+                                ls -la build/libs
+                                exit 1
+                            fi
 
-              echo JDKs reconhecidos pelo Gradle:
-              call gradlew.bat -q javaToolchains
-            '''
-          }
+                            mkdir -p "$TOMCAT_WEBAPPS_UNIX"
+                            cp -f "$WAR_FILE" "$TOMCAT_WEBAPPS_UNIX/$WAR_NAME"
+
+                            echo "Deploy realizado com sucesso."
+                        '''
+                    } else {
+                        bat '''
+                            if not exist "%WORKSPACE%\\build\\libs\\%WAR_NAME%" (
+                                echo ERRO: %WAR_NAME% nao encontrado.
+                                exit /b 1
+                            )
+
+                            copy /Y "%WORKSPACE%\\build\\libs\\%WAR_NAME%" "%TOMCAT_WEBAPPS_WINDOWS%\\%WAR_NAME%"
+                            echo Deploy concluido.
+                        '''
+                    }
+                }
+            }
         }
-      }
     }
-  }
 
-  post {
-    always {
-      echo "Arquivando artifacts e resultados de teste"
-      archiveArtifacts artifacts: '**/build/libs/*.jar', allowEmptyArchive: true
-      junit testResults: '**/build/test-results/test/*.xml', allowEmptyResults: true
+    post {
+        always {
+            echo 'Pipeline concluído.'
+        }
+
+        success {
+            echo 'Build e Deploy executados com sucesso!'
+        }
+
+        failure {
+            echo 'Falha detectada no pipeline.'
+        }
     }
-    failure {
-      echo "Pipeline falhou — verifique logs acima"
-    }
-  }
 }
